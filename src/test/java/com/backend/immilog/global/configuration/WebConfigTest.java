@@ -1,34 +1,72 @@
 package com.backend.immilog.global.configuration;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
+import org.springframework.mock.web.MockServletContext;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import java.util.List;
 
-@SpringBootTest
-@Disabled
-@DisplayName("WebConfig 클래스 통합 테스트")
+import static org.mockito.Mockito.*;
+
 class WebConfigTest {
 
-    private final WebConfig webConfig = new WebConfig();
-
     @Test
-    @DisplayName("사용자 검증을 위한 CORS 매핑 추가 테스트")
-    void addCorsMappingsForUserVerification() {
-        CorsRegistry corsRegistry = spy(CorsRegistry.class);
+    @DisplayName("Cors 설정이 올바르게 구성되어야 한다")
+    void addCorsMappings_ShouldConfigureMultipleMappings() {
+        // given
+        var fileStorage = new WebProperties.FileStorage("/test/path", "/images/**");
+        var corsMapping1 = new WebProperties.CorsMapping(
+                "/api/v1/users/*/verification",
+                List.of("*"),
+                List.of("*"),
+                List.of("*"),
+                false
+        );
+        var corsMapping2 = new WebProperties.CorsMapping(
+                "/**",
+                List.of("http://localhost:5173", "https://ko-meet-front.vercel.app"),
+                List.of("GET", "POST"),
+                List.of("Content-Type", "Authorization"),
+                true
+        );
+        var cors = new WebProperties.Cors(List.of(corsMapping1, corsMapping2));
+        var webProperties = new WebProperties(fileStorage, cors);
+
+        var webConfig = new WebConfig(webProperties);
+        var corsRegistry = mock(CorsRegistry.class);
+        var corsRegistration = mock(org.springframework.web.servlet.config.annotation.CorsRegistration.class);
+
+        when(corsRegistry.addMapping(anyString())).thenReturn(corsRegistration);
+        when(corsRegistration.allowedOrigins(any(String[].class))).thenReturn(corsRegistration);
+        when(corsRegistration.allowedMethods(any(String[].class))).thenReturn(corsRegistration);
+        when(corsRegistration.allowedHeaders(any(String[].class))).thenReturn(corsRegistration);
+        when(corsRegistration.allowCredentials(anyBoolean())).thenReturn(corsRegistration);
+
+        // when
         webConfig.addCorsMappings(corsRegistry);
-        verify(corsRegistry).addMapping("/api/v1/users/*/verification");
+
+        // then
+        verify(corsRegistry, times(2)).addMapping(anyString());
+        verify(corsRegistration, times(1)).allowCredentials(true);
     }
 
     @Test
-    @DisplayName("모든 엔드포인트에 대한 CORS 매핑 추가 테스트")
-    void addCorsMappingsForAllEndpoints() {
-        CorsRegistry corsRegistry = spy(CorsRegistry.class);
-        webConfig.addCorsMappings(corsRegistry);
-        verify(corsRegistry).addMapping("/**");
+    @DisplayName("Resource 핸들러가 파일 저장소를 올바르게 구성해야 한다")
+    void addResourceHandlers_ShouldConfigureFileStorage() {
+        // given
+        var fileStorage = new WebProperties.FileStorage("/test/files", "/images/**");
+        var cors = new WebProperties.Cors(List.of());
+        var webProperties = new WebProperties(fileStorage, cors);
+
+        var webConfig = new WebConfig(webProperties);
+
+        var applicationContext = mock(ApplicationContext.class);
+        var registry = new ResourceHandlerRegistry(applicationContext, new MockServletContext());
+
+        // when
+        webConfig.addResourceHandlers(registry);
     }
 }

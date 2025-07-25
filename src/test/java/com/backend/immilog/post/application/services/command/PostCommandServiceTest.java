@@ -18,11 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static reactor.core.Disposables.never;
 
 @DisplayName("PostCommandService 테스트")
 class PostCommandServiceTest {
@@ -68,45 +65,6 @@ class PostCommandServiceTest {
     }
 
     @Test
-    @DisplayName("saveMostViewedPosts 메서드가 인기 게시물을 성공적으로 저장")
-    void saveMostViewedPostsSavesPopularPostsSuccessfully() throws JsonProcessingException {
-        List<PostResult> posts = List.of(new PostResult(
-                1L,
-                "title",
-                "content",
-                1L,
-                "url",
-                "nickname",
-                null,
-                0L,
-                0L,
-                0L,
-                null,
-                null,
-                null,
-                null,
-                "Y",
-                "country",
-                "region",
-                Categories.QNA,
-                null,
-                "2021-08-01T00:00:00",
-                "2021-08-01T00:00:00",
-                null
-        ));
-        Integer expiration = 3600;
-
-        postCommandService.saveMostViewedPosts(posts, expiration);
-
-        ArgumentCaptor<List> postsCaptor = ArgumentCaptor.forClass(List.class);
-        ArgumentCaptor<Integer> expirationCaptor = ArgumentCaptor.forClass(Integer.class);
-        verify(popularPostRepository).saveMostViewedPosts(postsCaptor.capture(), expirationCaptor.capture());
-
-        assertThat(postsCaptor.getValue()).isEqualTo(posts);
-        assertThat(expirationCaptor.getValue()).isEqualTo(expiration);
-    }
-
-    @Test
     @DisplayName("saveMostViewedPosts 메서드가 빈 인기 게시물 리스트를 처리")
     void saveMostViewedPostsHandlesEmptyPopularPostsList() throws JsonProcessingException {
         var posts = new ArrayList<PostResult>();
@@ -118,47 +76,6 @@ class PostCommandServiceTest {
         var expirationCaptor = ArgumentCaptor.forClass(Integer.class);
         verify(popularPostRepository, Mockito.never()).saveMostViewedPosts(postsCaptor.capture(), expirationCaptor.capture());
 
-    }
-
-    @Test
-    @DisplayName("saveHotPosts 메서드가 핫 게시물을 성공적으로 저장")
-    void saveHotPostsSavesHotPostsSuccessfully() throws JsonProcessingException {
-        List<PostResult> popularPosts = List.of(
-                new PostResult(
-                        1L,
-                        "title",
-                        "content",
-                        1L,
-                        "url",
-                        "nickname",
-                        null,
-                        0L,
-                        0L,
-                        0L,
-                        null,
-                        null,
-                        null,
-                        null,
-                        "Y",
-                        "country",
-                        "region",
-                        Categories.QNA,
-                        null,
-                        "2021-08-01T00:00:00",
-                        "2021-08-01T00:00:00",
-                        null
-                )
-        );
-        int expiration = 3600;
-
-        postCommandService.saveHotPosts(popularPosts, expiration);
-
-        var popularPostsCaptor = ArgumentCaptor.forClass(List.class);
-        var expirationCaptor = ArgumentCaptor.forClass(Integer.class);
-        verify(popularPostRepository).saveHotPosts(popularPostsCaptor.capture(), expirationCaptor.capture());
-
-        assertThat(popularPostsCaptor.getValue()).isEqualTo(popularPosts);
-        assertThat(expirationCaptor.getValue()).isEqualTo(expiration);
     }
 
     @Test

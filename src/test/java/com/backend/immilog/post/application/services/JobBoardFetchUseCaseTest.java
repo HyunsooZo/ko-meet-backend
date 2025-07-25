@@ -78,7 +78,7 @@ class JobBoardFetchUseCaseTest {
 
         // then
         JobBoardResult result = jobBoards.getContent().getFirst();
-        assertThat(result.getSeq()).isEqualTo(1L);
-        assertThat(result.getTitle()).isEqualTo("title");
+        assertThat(result.seq()).isEqualTo(1L);
+        assertThat(result.title()).isEqualTo("title");
     }
 }
